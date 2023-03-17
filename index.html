@@ -19,23 +19,105 @@
     const apiUrl = "https://api.github.com/repos/edofnj/drive/contents";
 
 fetch(apiUrl)
-	.then(response => response.json())
-	.then(data => {
-		const tableBody = document.querySelector("tbody");
-		
-		data.forEach(item => {
-			if (item.type === "file") {
-				const row = document.createElement("tr");
-				const nameCell = document.createElement("td");
-				
-				nameCell.textContent = item.name;
-				
-				row.appendChild(nameCell);
-				tableBody.appendChild(row);
-			}
-		});
-	})
-	.catch(error => console.error(error));
+  .then(response => response.json())
+  .then(data => {
+    const tableBody = document.querySelector("tbody");
+
+    data.forEach(item => {
+      const row = document.createElement("tr");
+      const nameCell = document.createElement("td");
+
+      if (item.type === "file") {
+        const fileLink = document.createElement("a");
+        fileLink.href = item.download_url;
+        fileLink.textContent = item.name;
+
+        nameCell.appendChild(fileLink);
+      } else if (item.type === "dir") {
+        const folderLink = document.createElement("a");
+        folderLink.href = "#";
+        folderLink.textContent = item.name;
+        folderLink.addEventListener("click", () => {
+          fetch(item.url)
+            .then(response => response.json())
+            .then(folderData => {
+              tableBody.innerHTML = "";
+              folderData.forEach(folderItem => {
+                const folderRow = document.createElement("tr");
+                const folderNameCell = document.createElement("td");
+
+                if (folderItem.type === "file") {
+                  const fileLink = document.createElement("a");
+                  fileLink.href = folderItem.download_url;
+                  fileLink.textContent = folderItem.name;
+
+                  folderNameCell.appendChild(fileLink);
+                } else if (folderItem.type === "dir") {
+                  const folderLink = document.createElement("a");
+                  folderLink.href = "#";
+                  folderLink.textContent = folderItem.name;
+                  folderLink.addEventListener("click", () => {
+                    // recursively fetch subfolder contents
+                    fetch(folderItem.url)
+                      .then(response => response.json())
+                      .then(subfolderData => {
+                        tableBody.innerHTML = "";
+                        subfolderData.forEach(subfolderItem => {
+                          const subfolderRow = document.createElement("tr");
+                          const subfolderNameCell = document.createElement("td");
+
+                          if (subfolderItem.type === "file") {
+                            const fileLink = document.createElement("a");
+                            fileLink.href = subfolderItem.download_url;
+                            fileLink.textContent = subfolderItem.name;
+
+                            subfolderNameCell.appendChild(fileLink);
+                          } else if (subfolderItem.type === "dir") {
+                            const subfolderLink = document.createElement("a");
+                            subfolderLink.href = "#";
+                            subfolderLink.textContent = subfolderItem.name;
+                            subfolderLink.addEventListener("click", () => {
+                              // recursively fetch subfolder contents
+                              fetch(subfolderItem.url)
+                                .then(response => response.json())
+                                .then(subsubfolderData => {
+                                  tableBody.innerHTML = "";
+                                  subsubfolderData.forEach(subsubfolderItem => {
+                                    const subsubfolderRow = document.createElement("tr");
+                                    const subsubfolderNameCell = document.createElement("td");
+
+                                    if (subsubfolderItem.type === "file") {
+                                      const fileLink = document.createElement("a");
+                                      fileLink.href = subsubfolderItem.download_url;
+                                      fileLink.textContent = subsubfolderItem.name;
+
+                                      subsubfolderNameCell.appendChild(fileLink);
+                                    } else if (subsubfolderItem.type === "dir") {
+                                      // handle subsubfolders recursively
+                                    }
+
+                                    subsubfolderRow.appendChild(subsubfolderNameCell);
+                                    tableBody.appendChild(subsubfolderRow);
+                                  });
+                                })
+                                .catch(error => console.error(error));
+                            });
+                            subfolderNameCell.appendChild(subfolderLink);
+                          }
+
+                          subfolderRow.appendChild(subfolderNameCell);
+                          tableBody.appendChild(subfolderRow);
+                        });
+                      })
+                      .catch(error => console.error(error));
+                  });
+                  folderNameCell.appendChild(folderLink);
+}
+		        row.appendChild(nameCell);
+  tableBody.appendChild(row);
+});
+})
+.catch(error => console.error(error));
 
   </script>
 </html>
